@@ -3,7 +3,7 @@
 -- ============================================================
 -- type   : COURSE_REGISTRATION | PAYMENT_CONFIRMED | LECTURE_REMINDER | CANCELLATION | CUSTOM
 -- channel: EMAIL | IN_APP
--- status : PENDING | PROCESSING | SENT | READ | FAILED | DEAD_LETTER
+-- status : PENDING | PROCESSING | SENT | FAILED | DEAD_LETTER
 -- ============================================================
 CREATE TABLE notification (
     id             BIGSERIAL    PRIMARY KEY,
@@ -18,6 +18,7 @@ CREATE TABLE notification (
     retry_after    TIMESTAMPTZ,
     failure_reason TEXT,
     scheduled_at   TIMESTAMPTZ,
+    read_at        TIMESTAMPTZ,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT now(),
     updated_at     TIMESTAMPTZ  NOT NULL DEFAULT now(),
 

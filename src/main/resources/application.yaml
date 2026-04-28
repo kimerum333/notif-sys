@@ -1,13 +1,12 @@
 spring:
   application:
     name: notif-sys
-  spring:
-    datasource:
-      url: jdbc:postgresql://localhost:5432/notif
-      username: postgres
-      password: postgres
-      driver-class-name: org.postgresql.Driver
-    jpa:
-      hibernate:
-        ddl-auto: validate  # 일단 validate, 테이블 만들 때 update로
-      show-sql: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/notif
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

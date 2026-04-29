@@ -17,3 +17,5 @@ notification:
     max-stuck-count: 3
     stuck-threshold-seconds: 60
     base-backoff-seconds: 5
+    poll-interval-ms: 1000
+    batch-size: 20

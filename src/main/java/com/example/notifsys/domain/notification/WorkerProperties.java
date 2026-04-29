@@ -7,6 +7,8 @@ public record WorkerProperties(
         int maxFailCount,
         int maxStuckCount,
         int stuckThresholdSeconds,
-        int baseBackoffSeconds
+        int baseBackoffSeconds,
+        int pollIntervalMs,
+        int batchSize
 ) {
 }

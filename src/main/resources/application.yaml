@@ -10,3 +10,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+notification:
+  worker:
+    max-fail-count: 5
+    max-stuck-count: 3
+    stuck-threshold-seconds: 60
+    base-backoff-seconds: 5

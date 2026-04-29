@@ -121,17 +121,17 @@ public class Notification {
         this.updatedAt = Instant.now();
     }
 
-    public void markProcessing() {
+    void markProcessing() {
         requireStatus(PENDING, FAILED);
         this.status = PROCESSING;
     }
 
-    public void markSent() {
+    void markSent() {
         requireStatus(PROCESSING);
         this.status = SENT;
     }
 
-    public void markFailed(String reason, Instant nextRetryAfter) {
+    void markFailed(String reason, Instant nextRetryAfter) {
         requireStatus(PROCESSING);
         this.status = FAILED;
         this.failCount++;
@@ -139,7 +139,7 @@ public class Notification {
         this.retryAfter = nextRetryAfter;
     }
 
-    public void markDeadLetter(String reason) {
+    void markDeadLetter(String reason) {
         requireStatus(PROCESSING);
         this.status = DEAD_LETTER;
         this.failCount++;
@@ -147,13 +147,13 @@ public class Notification {
         this.retryAfter = null;
     }
 
-    public void recoverFromStuck() {
+    void recoverFromStuck() {
         requireStatus(PROCESSING);
         this.status = PENDING;
         this.stuckCount++;
     }
 
-    public void markStuckDeadLetter(String reason) {
+    void markStuckDeadLetter(String reason) {
         requireStatus(PROCESSING);
         this.status = DEAD_LETTER;
         this.stuckCount++;
@@ -161,7 +161,7 @@ public class Notification {
         this.retryAfter = null;
     }
 
-    public void markRead() {
+    void markRead() {
         if (this.status != SENT) {
             throw new IllegalStateException("Cannot mark as read: status is " + this.status);
         }
@@ -170,7 +170,7 @@ public class Notification {
         }
     }
 
-    public void resetForManualRetry() {
+    void resetForManualRetry() {
         requireStatus(DEAD_LETTER);
         this.status = PENDING;
         this.retryAfter = null;

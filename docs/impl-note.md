@@ -82,3 +82,16 @@ NotificationConsumer    ← 운영 전환 시 브로커 메시지 수신 후 dis
 - 실제 운영 코드에는 영향 없음 (실제 sender는 event_id를 보지 않음).
 
 **대안:** 시나리오별 별도 Mock 구현체(`AlwaysSuccessMockSender`, `AlwaysFailMockSender`)도 가능하나, 통합 테스트에서 워커 한 사이클 안에 성공/실패가 섞여야 할 때 단일 구현체가 편리.
+
+## 결정 6. Notification 엔티티 state mutator의 visibility 통제
+
+**결정:** `markProcessing` / `markSent` / `markFailed` / `markDeadLetter` / `recoverFromStuck` / `markStuckDeadLetter` / `markRead` / `resetForManualRetry` 등 모든 상태 변경 메서드를 package-private으로 둠. `com.example.notifsys.domain.notification` 패키지 내부의 서비스(Dispatcher / OutcomeRecorder / 추후 Poller·ReadService 등)만 호출 가능.
+
+**사유:**
+- 도메인 메서드가 public이면, 호출자가 부수 책임(`error_log` 적재, 백오프 시각 산정 등)을 수행하지 않은 채 entity 상태만 바꾸는 코드 경로가 컴파일러에 의해 차단되지 않음. 데이터 정합성이 코드 컨벤션과 리뷰에만 의존.
+- 예: `markFailed` 호출 후 `errorLogRepo.save`를 빠뜨리면 알림은 실패로 기록되지만 에러 이력은 유실. 신규 개발자가 같은 실수를 반복할 위험.
+- package-private으로 두면 단일 서비스(`OutcomeRecorder`)를 거치도록 강제됨. 외부 패키지에서 entity 상태를 직접 변경하려는 시도는 컴파일 에러로 즉시 발견.
+
+**트레이드오프:** 서비스 클래스를 entity와 동일 패키지에 위치시켜야 함(엄격한 헥사고날 레이어링과 거리). 본 과제 규모에선 데이터 정합성 보장이 패키지 분리보다 우선이라 판단.
+
+**대안:** 도메인 이벤트 기반(메서드는 public 유지, 상태 변경 시 이벤트 발행 → 리스너가 부수 책임 수행). 결합도는 낮으나 복잡도 상승. 모듈 분할 필요 시점에 재검토.

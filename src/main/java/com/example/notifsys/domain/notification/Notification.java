@@ -80,7 +80,7 @@ public class Notification {
     @Column(name = "retry_after")
     private Instant retryAfter;
 
-    @Column(name = "failure_reason")
+    @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;
 
     @Column(name = "scheduled_at")

@@ -33,6 +33,9 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     runtimeOnly 'org.postgresql:postgresql'
+    // Hibernate 7.2의 JacksonJsonFormatMapper는 Jackson 2 ObjectMapper만 받음.
+    // Spring Boot 4 / Jackson 3 환경에서 JSONB 매핑을 위해 Jackson 2 databind을 명시 추가.
+    runtimeOnly 'com.fasterxml.jackson.core:jackson-databind:2.21.0'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'

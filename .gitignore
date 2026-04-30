@@ -38,3 +38,6 @@ out/
 
 ### Sensitive Informations
 docs/private/
+
+### AI session handoff (operational, not deliverable)
+CLAUDE.md

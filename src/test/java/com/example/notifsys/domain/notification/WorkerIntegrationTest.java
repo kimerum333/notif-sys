@@ -190,6 +190,42 @@ class WorkerIntegrationTest {
     }
 
     @Test
+    void pollCycle_scheduledInFuture_isNotPickedUp() {
+        // 선택 구현 — 발송 스케줄링: scheduledAt이 미래면 폴러는 픽업하지 않는다.
+        Instant future = Instant.now().plusSeconds(3600);
+        Notification saved = notificationRepo.saveAndFlush(Notification.builder()
+                .recipientId(40L)
+                .type(NotificationType.LECTURE_REMINDER)
+                .channel(NotificationChannel.EMAIL)
+                .eventId("success-scheduled-future-1")
+                .scheduledAt(future)
+                .build());
+
+        poller.poll();
+
+        Notification reloaded = notificationRepo.findById(saved.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.PENDING);
+        assertThat(reloaded.getScheduledAt()).isAfter(Instant.now());
+    }
+
+    @Test
+    void pollCycle_scheduledInPast_isPickedUpAndSent() {
+        // 선택 구현 — 발송 스케줄링: scheduledAt이 과거면 즉시 픽업 가능.
+        Notification saved = notificationRepo.saveAndFlush(Notification.builder()
+                .recipientId(41L)
+                .type(NotificationType.PAYMENT_CONFIRMED)
+                .channel(NotificationChannel.EMAIL)
+                .eventId("success-scheduled-past-1")
+                .scheduledAt(Instant.now().minusSeconds(60))
+                .build());
+
+        poller.poll();
+
+        Notification reloaded = notificationRepo.findById(saved.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(NotificationStatus.SENT);
+    }
+
+    @Test
     void pollCycle_pendingWithPermanentFailure_endsAsDeadLetter() {
         Notification saved = notificationRepo.saveAndFlush(Notification.builder()
                 .recipientId(3L)

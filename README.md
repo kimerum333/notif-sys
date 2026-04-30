@@ -17,14 +17,14 @@
 
 | 카테고리 | 선택 |
 |---|---|
-| 언어 / 런타임 | Java 17 (Amazon Corretto 17 검증) |
+| 언어 / 런타임 | Java 17 (Amazon Corretto 17) |
 | 프레임워크 | Spring Boot 4.0.6 (webmvc, data-jpa, validation, actuator) |
 | 빌드 | Gradle 9.4.1 + Spring Dependency Management |
-| 영속화 | Spring Data JPA, Hibernate 7.2, **PostgreSQL 18** |
-| 테스트 | JUnit 5, AssertJ, Spring Boot Test, **Testcontainers 1.20.4** (실제 Postgres 컨테이너) |
-| 보조 | Lombok, Logback (파일 로테이션) |
+| 영속화 | Spring Data JPA, Hibernate 7.2, PostgreSQL 18 |
+| 테스트 | JUnit 5, AssertJ, Spring Boot Test, Testcontainers 1.20.4|
+| 보조 | Lombok, Logback|
 
-PostgreSQL을 선택한 이유 — `FOR UPDATE SKIP LOCKED`로 다중 워커 동시성을 DB 단에서 차단 가능, JSONB로 `reference_data`를 타입별 다른 구조로 유연하게 수용 가능. 두 기능이 본 설계의 핵심이라 H2 / MySQL이 아닌 PostgreSQL.
+PostgreSQL을 선택한 이유 — `FOR UPDATE SKIP LOCKED`로 다중 워커 동시성 이슈를 DB 단에서 차단 가능, JSONB로 `reference_data`를 타입별 다른 구조로 유연하게 수용 가능. 두 기능이 본 설계의 핵심이라 H2 / MySQL이 아닌 PostgreSQL.
 
 ## 실행 방법
 
@@ -236,21 +236,22 @@ curl http://localhost:8080/actuator/health
 
 본 과제는 Claude Code (Opus 4.7) 와 페어 프로그래밍으로 진행했다. 솔직하게 단계별로 누가 무엇을 했는지 적는다 — 평가에서 *AI 작성 비중*이 아닌 *결정의 사유 / 일관성 / 검증*을 봐 주시기를 부탁드린다.
 
-### 1. 분석 단계 — 본인 작성, AI 첨삭
+### 1. 분석 단계 — 본인 작성, AI 첨삭(2일)
+- 이 단계에서는 Claude code 가 아닌, Claude 웹 채팅UI를 활용해 큰 밑그림을 함께 그렸음.
+- 아웃박스 패턴, SELECT FOR UPDATE SKIP LOCKED 을 활용한 DB단에서의 동시성 이슈 해결, 유니크 제약을 활용한 멱등성 이슈 해결 등의 핵심 아이디어를 제안받고 학습.
 - `docs/analysis-note.md`의 본문(과제 정독 분석, 워커 설계, 멱등성 처리, 상태 관리, 재시도 정책 등)을 코딩 시작 전 본인이 직접 작성.
-- 작성한 분석을 Claude에게 검증 요청 → "잘 짚은 부분 / 보완이 필요한 부분" 형태로 첨삭받음 (analysis-note 하단의 "AI의 첨삭 결과" 섹션이 그 출력). 첨삭 결과 중 *받아들일 것*만 본인 판단으로 후속 노트에 반영.
-- `SELECT FOR UPDATE SKIP LOCKED` 패턴은 본인이 분석 단계에서 식별 → AI는 적합성을 보강 / 재시도 정책을 다듬는 식으로 기여.
+- 작성한 분석을 Claude code에서 검증 요청 → "잘 짚은 부분 / 보완이 필요한 부분" 형태로 첨삭받음 (analysis-note 하단의 "AI의 첨삭 결과" 섹션이 그 출력).
 
-### 2. 설계 단계 — AI 트레이드오프 제시 + 본인 채택
-- 스키마 / 정책 / 구현 / API 결정 노트는 결정/사유/대안 형식으로 정리. *결정의 사유*를 본인이 납득해야 노트에 들어간다는 원칙.
+### 2. 설계 단계 — AI 트레이드오프 제시 + 본인 채택(1일)
+- 이 단계에서는 매 작업 시작 전에 AI와 방향성을 논의하고, 결정한 뒤 결정 내역을 *-note 의 형태로 정리 후 작업을 시작함.
+- 스키마 / 정책 / 구현 / API 결정 노트는 결정/사유/대안 형식으로 정리.
 - AI가 트레이드오프를 제시한 결정: 통합 응답 envelope vs REST 순수, Pageable 사용 여부, API 에러 별도 테이블 도입 여부 등. 채택 / 거부는 본인 판단.
-- AI가 처음 제안했지만 본인이 *거부*한 케이스: api-note 결정 7 "bulk 도입" — AI가 "관리자 일괄 발송 시나리오" 추측으로 제안 → 본인의 명세 재확인으로 *명세에 없음*을 발견 → 거부. 노트에서 해당 결정 제거 후 commit.
 
-### 3. 구현 단계 — AI가 대부분 작성, 본인이 리뷰 / 채택
-- 엔티티 / 도메인 서비스 / DTO / 컨트롤러 / 테스트 코드의 작성은 대부분 AI가 했다. 본인은 PR 리뷰 관점에서 검토하고 채택 / 수정 지시.
+### 3. 구현 단계 — AI가 대부분 작성, 본인이 리뷰 / 채택(0.5일)
+- 엔티티 / 도메인 서비스 / DTO / 컨트롤러 / 테스트 코드의 작성은 대부분 AI가 했으며, 본인은 PR 리뷰 관점에서 검토하고 채택 / 수정 지시.
 - 다만 *어떤 클래스를 만들지, 어떤 시그니처일지, 어떤 트랜잭션 경계일지*는 사전에 노트(`impl-note`, `api-note`)로 합의한 뒤 AI가 그 결정을 따랐음. 즉 "구조 결정" 단계는 본인 주도, "타이핑" 단계는 AI 주도.
 
-### 4. 검증 / 디버깅 단계
+### 4. 검증 / 디버깅 단계(0.5일)
 - 1단계 스모크 부팅(실제 Postgres 18 컨테이너에 부팅하여 Hibernate 생성 DDL 검증)은 AI가 절차 제안 → 부팅 결과를 공유하고 AI가 `failure_reason varchar(255)` 잘림 위험 식별 → 본인이 fix 채택.
 - 2단계 통합 테스트(TestContainers, 멱등성 / SKIP LOCKED 동시성) 작성은 AI가 주도, 본인은 통과 확인.
 

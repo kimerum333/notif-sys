@@ -1,0 +1,16 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+notification:
+  worker:
+    max-fail-count: 5
+    max-stuck-count: 3
+    stuck-threshold-seconds: 60
+    base-backoff-seconds: 5
+    # Large poll interval so @Scheduled does not fire during tests.
+    # Tests drive poller / pickup / recovery services manually for determinism.
+    poll-interval-ms: 86400000
+    batch-size: 20
